@@ -1,32 +1,39 @@
+import os
 from ultralytics import YOLO
 import cv2
 
 # Load YOLOv8 model
-model = YOLO('./runs/detect/train3/weights/best.pt')  # Replace with your model path
+model = YOLO('./runs/detect/train5/weights/best.pt')  # Replace with your model path
 
-# Initialize video capture
-cap = cv2.VideoCapture(0)  # 0 for the default webcam
+# Directory containing JPEG images
+image_folder = './data/soyjoy_raw'
 
-while True:
-    # Read frame from the webcam
-    ret, frame = cap.read()
-    if not ret:
-        break
+# Create an output folder if it doesn't exist
+output_folder = './output/soyjoy_raw'
+os.makedirs(output_folder, exist_ok=True)
 
-    # Perform inference
-    results = model(frame)
+# Iterate over all JPEG files in the directory
+for filename in os.listdir(image_folder):
+    if filename.lower().endswith('.jpg') or filename.lower().endswith('.png'):
+        # Construct full file path
+        file_path = os.path.join(image_folder, filename)
 
-    # Get the result (assuming it's a list of images)
-    # For YOLOv8, this should be the frame with annotations
-    annotated_frame = results[0].plot()  # Use the `.plot()` method if available
+        # Read image
+        image = cv2.imread(file_path)
+        if image is None:
+            print(f"Error reading image {file_path}")
+            continue
 
-    # Display the annotated frame
-    cv2.imshow('YOLOv8 Real-Time Detection', annotated_frame)
+        # Perform inference
+        results = model(image)
 
-    # Exit on 'q' key press
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-# Release resources
-cap.release()
-cv2.destroyAllWindows()
+        # Render results on the image
+        annotated_image = results[0].plot()  # Adjust according to YOLOv8 results format
+        
+        # Save annotated image
+        output_file_path = os.path.join(output_folder, filename)
+        
+        cv2.imwrite(output_file_path, annotated_image)
+        print(f"Annotated image saved to {output_file_path}")
+        
+print("Processing complete.")
