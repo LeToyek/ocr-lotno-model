@@ -3,7 +3,7 @@ from ultralytics import YOLO
 import cv2
 
 # Load YOLOv8 model
-model = YOLO('./runs/detect/train7/weights/best.pt')  # Replace with your model path
+model = YOLO('./runs/detect/combined_final_lot_no/weights/best.pt')  # Replace with your model path
 
 # Directory containing JPEG images
 image_folder = './data/soyjoy_raw'

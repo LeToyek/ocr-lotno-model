@@ -18,15 +18,15 @@ st.set_page_config(
 )
 
 with st.sidebar:
-  st.write("## Navigation")
-  st.subheader("1. [Data Crawling](#data_crawling)")
-  st.subheader("2. [Data Annotating](#data_annotating)")
-  st.subheader("3. [Data Filtering](#data_filtering)")
-  st.subheader("4. [OCR](#ocr)")
-  st.subheader("5. [Postprocessing](#postprocessing)")
-  st.subheader("6. [Finalization](#finalization)")
-  
-    
+    st.write("## Navigation")
+    st.subheader("1. [Data Crawling](#data_crawling)")
+    st.subheader("2. [Data Annotating](#data_annotating)")
+    st.subheader("3. [Data Filtering](#data_filtering)")
+    st.subheader("4. [OCR](#ocr)")
+    st.subheader("5. [Postprocessing](#postprocessing)")
+    st.subheader("6. [Finalization](#finalization)")
+
+
 # Title of the app
 st.title("Hasil Riset OCR Lot Number pada CAP Botol Pocari")
 
@@ -50,7 +50,7 @@ for i, filename in enumerate(os.listdir(image_folder)):
         # Construct full file path
         file_path = os.path.join(image_folder, filename)
         images.append(file_path)
-        
+
 # Image uploader
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
@@ -58,7 +58,9 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png
 img = image_select("Foto Mentah dari HP", images)
 if uploaded_file is not None:
     # Read image
-    image = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR)
+    image = cv2.imdecode(
+        np.fromstring(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR
+    )
     if image is None:
         st.write(f"Error reading image {uploaded_file.name}")
     else:
@@ -110,7 +112,7 @@ for bbox in bbox_data:
     ]
     st.write(f"**Gambar Terpotong**")
     st.image(cropped_image)
-    
+
 st.markdown('<a id="data_filtering"></a>', unsafe_allow_html=True)
 st.subheader("3. Penambahan Filter pada Gambar (Preprocessing)")
 st.write(
@@ -163,6 +165,27 @@ st.markdown('<a id="filter_thresh"></a>', unsafe_allow_html=True)
 st.write(f"**E. Adaptive Thresholding**")
 st.write("Mengubah gambar menjadi binary dengan metode adaptive thresholding")
 st.image(thresh)
+
+st.write(f"**F. OCR Result**")
+
+rgb_image = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+
+results = reader.readtext(
+    rgb_image, width_ths=0.7, link_threshold=0.8, decoder="greedy"
+)
+for bbox, text, prob in results:
+    cv2.rectangle(rgb_image, bbox[0], bbox[2], (0, 255, 0), 2)
+    cv2.putText(
+        rgb_image,
+        text,
+        (bbox[0][0], bbox[0][1] - 10),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0, 255, 0),
+        2,
+    )
+st.image(rgb_image)
+
 
 # 4. OCR
 
@@ -255,13 +278,13 @@ st.write(f"{bottom_text}")
 st.write(
     "Meskipun model telah dapat mengidentifikasi dengan baik, terkadang, hasil yang ditampilkan masih memiliki `confidences` yang rendah. Oleh karena itu, pada penelitian ini penulis menambahkan metode untuk mengidentifikasi kembali dengan model OCR yang sudah diimplementasikan di banyak project yaitu `EasyOCR`. Penulis menetapkan threshold sebesar 0.6 untuk mengidentifikasi kembali teks yang memiliki `confidences` rendah"
 )
-conf_threshold = 0.61
+conf_threshold = 0.8
 top_box = []
 bottom_box = []
 top_text = ""
 bottom_text = ""
 count = 0
-for i,bbox in enumerate(sorted_bbox_data):
+for i, bbox in enumerate(sorted_bbox_data):
     coords, char, conf = bbox
     if conf < conf_threshold:
         st.divider()
@@ -312,25 +335,33 @@ st.write(
     "Langkah terakhir yang dilakukan adalah dengan melakukan formatting pada data yang telah diproses. Proses ini bertujuan untuk menyesuaikan hasil OCR dengan format pada Lot No yang telah ditentukan. Berikut adalah hasil akhir dari OCR Lot Number pada CAP Botol Pocari"
 )
 
+
 def format_export_ver(ocr_result):
-  res = ocr_result
-  string_id = ""
-  formatted_result = ""
-  if "NSX" in ocr_result:
-    string_id = "NSX"
-    res = "NSX" + ocr_result.replace("N","").replace("S","").replace("X","").replace(" ","")
-    formatted_result = res.split("X")[1]
-  elif "HSD" in ocr_result:
-    string_id = "HSD"
-    res = "HSD" + ocr_result.replace("H","").replace("S","").replace("D","").replace(" ","")
-    formatted_result = res.split("D")[1]
-  else:
-    return ocr_result
-  formatted_result = "/".join(formatted_result[i : i + 2] for i in range(0, 6, 2))
-  
-  final_res = f"{string_id} {formatted_result}"
-  return final_res 
-  
+    res = ocr_result
+    string_id = ""
+    formatted_result = ""
+    if "NSX" in ocr_result:
+        string_id = "NSX"
+        res = "NSX" + ocr_result.replace("N", "").replace("S", "").replace(
+            "X", ""
+        ).replace(" ", "")
+        formatted_result = res.split("X")[1]
+    elif "HSD" in ocr_result:
+        string_id = "HSD"
+        res = "HSD" + ocr_result.replace("H", "").replace("S", "").replace(
+            "D", ""
+        ).replace(" ", "")
+        formatted_result = res.split("D")[1]
+    else:
+        return ocr_result
+    
+    # remove character that is not alphabet or number
+    formatted_result = "".join([i for i in formatted_result if i.isalnum()])
+    formatted_result = "/".join(formatted_result[i : i + 2] for i in range(0, 6, 2))
+
+    final_res = f"{string_id} {formatted_result}"
+    return final_res
+
 
 def format_lot_no(ocr_result):
     # if first layer is not number
@@ -360,8 +391,10 @@ for i, bbox in enumerate(top_box):
     if i + 1 < len(top_box):
         next_box = top_box[i + 1][0]
         next_conf = top_box[i + 1][2]
-        is_stacked_next = (next_box[0] - pos_tolerance < current_box[0] < next_box[0] + pos_tolerance)
-        
+        is_stacked_next = (
+            next_box[0] - pos_tolerance < current_box[0] < next_box[0] + pos_tolerance
+        )
+
         if is_stacked_next:
             if current_conf < next_conf:
                 continue
@@ -369,14 +402,40 @@ for i, bbox in enumerate(top_box):
     if i - 1 >= 0:
         prev_box = top_box[i - 1][0]
         prev_conf = top_box[i - 1][2]
-        is_stacked_before = (prev_box[0] - pos_tolerance < current_box[0] < prev_box[0] + pos_tolerance)
-        
+        is_stacked_before = (
+            prev_box[0] - pos_tolerance < current_box[0] < prev_box[0] + pos_tolerance
+        )
+
         if is_stacked_before:
             if current_conf < prev_conf:
                 continue
     top_text += bbox[1]
 
-for bbox in bottom_box:
+for i, bbox in enumerate(bottom_box):
+    current_box = bbox[0]
+    current_conf = bbox[2]
+
+    if i + 1 < len(bottom_box):
+        next_box = bottom_box[i + 1][0]
+        next_conf = bottom_box[i + 1][2]
+        is_stacked_next = (
+            next_box[0] - pos_tolerance < current_box[0] < next_box[0] + pos_tolerance
+        )
+
+        if is_stacked_next:
+            if current_conf < next_conf:
+                continue
+
+    if i - 1 >= 0:
+        prev_box = bottom_box[i - 1][0]
+        prev_conf = bottom_box[i - 1][2]
+        is_stacked_before = (
+            prev_box[0] - pos_tolerance < current_box[0] < prev_box[0] + pos_tolerance
+        )
+
+        if is_stacked_before:
+            if current_conf < prev_conf:
+                continue
     bottom_text += bbox[1]
 
 st.write(f"**Final Output**")
