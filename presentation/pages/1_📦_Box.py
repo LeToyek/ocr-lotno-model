@@ -162,6 +162,50 @@ st.write(
 )
 st.image(closed)
 
+reader = easyocr.Reader(["en"])
+st.write(f"**F. Hasil OCR**")
+st.write(
+    "Hasil dari OCR pada gambar yang telah di preprocessing"
+)
+results = reader.readtext(cropped_image, width_ths=0.7, link_threshold=0.8, decoder="greedy")
+top_bound = 0.3
+top_text = ""
+bottom_text = ""
+for (bbox, text, prob) in results:
+    print("BBOX: ", bbox)
+    print("crop: ", cropped_image.shape[0] * top_bound)
+    print("shape: ", cropped_image.shape)
+    if bbox[1][1] < cropped_image.shape[0] * top_bound:
+        top_text += text
+    else:
+        bottom_text += text    
+    cv2.line(cropped_image, (0, int(cropped_image.shape[0] * top_bound)), (cropped_image.shape[1], int(cropped_image.shape[0] * top_bound)), (255, 0, 0), 2)
+    cv2.rectangle(cropped_image, bbox[0], bbox[2], (0, 255, 0), 2)
+    cv2.putText(cropped_image, text, (bbox[0][0], bbox[0][1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+st.image(cropped_image)
+def sanitize_text(text: str):
+    # text to uppercase
+    text = text.upper()
+    # switch I to 1 and S or Z to 2
+    text = text.replace("I", "1").replace("S", "2").replace("Z", "2")
+    # only show alphabet and number
+    text = "".join([c for c in text if c.isalnum()])
+    return text
+
+def modify_text(text:str):
+    # split "K"
+    text = text.split("K")
+    date_text: str = text[0]
+    # give "." every 2 characters
+    date_text = ".".join(date_text[i:i+2] for i in range(0, 6, 2))
+    final_text = f"{date_text} K{text[1]}"
+    return final_text
+
+st.write("TOP TEXT ", modify_text(sanitize_text(top_text)))
+st.write("BOTTOM TEXT ", sanitize_text(bottom_text))
+    
+
+
 # 4.OCR
 
 st.markdown('<a id="ocr"></a>', unsafe_allow_html=True)
