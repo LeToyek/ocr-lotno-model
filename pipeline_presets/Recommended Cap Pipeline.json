@@ -1,0 +1,32 @@
+[
+    {
+        "function": "Fill Black Corners"
+    },
+    {
+        "function": "Grayscale",
+        "params": {}
+    },
+    {
+        "function": "Bilateral Filtered Image",
+        "params": {
+            "d": 5,
+            "sigmaColor": 175,
+            "sigmaSpace": 175
+        }
+    },
+    {
+        "function": "Fast Non-Local Means Denoising",
+        "params": {
+            "h": 13,
+            "templateWindowSize": 7,
+            "searchWindowSize": 21
+        }
+    },
+    {
+        "function": "Convert Scale Abs",
+        "params": {
+            "alpha": 0.8,
+            "beta": 0
+        }
+    }
+]

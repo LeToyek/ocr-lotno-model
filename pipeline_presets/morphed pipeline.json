@@ -1,0 +1,51 @@
+[
+    {
+        "function": "Fill Black Corners"
+    },
+    {
+        "function": "Grayscale",
+        "params": {}
+    },
+    {
+        "function": "Bilateral Filtered Image",
+        "params": {
+            "d": 5,
+            "sigmaColor": 175,
+            "sigmaSpace": 175
+        }
+    },
+    {
+        "function": "Fast Non-Local Means Denoising",
+        "params": {
+            "h": 13,
+            "templateWindowSize": 7,
+            "searchWindowSize": 21
+        }
+    },
+    {
+        "function": "Convert Scale Abs",
+        "params": {
+            "alpha": 0.8,
+            "beta": 0
+        }
+    },
+    {
+        "function": "Adaptive Threshold",
+        "params": {
+            "block_size": 17,
+            "C": 2
+        }
+    },
+    {
+        "function": "Morphological Opening",
+        "params": {
+            "kernel_size": 3
+        }
+    },
+    {
+        "function": "Morphological Closing",
+        "params": {
+            "kernel_size": 5
+        }
+    }
+]
